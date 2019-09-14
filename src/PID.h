@@ -6,6 +6,24 @@ class PID {
   /**
    * Constructor
    */
+
+
+   
+    /*
+  * Errors
+  */
+  double p_error = 0;
+  double i_error = 0;
+  double d_error = 0;
+
+  /*
+  * Coefficients
+  */ 
+  double Kp;
+  double Ki;
+  double Kd;
+  
+  
   PID();
 
   /**
@@ -30,21 +48,6 @@ class PID {
    * @output The total PID error
    */
   double TotalError();
-
- private:
-  /**
-   * PID Errors
-   */
-  double p_error;
-  double i_error;
-  double d_error;
-
-  /**
-   * PID Coefficients
-   */ 
-  double Kp;
-  double Ki;
-  double Kd;
 };
 
 #endif  // PID_H
