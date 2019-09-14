@@ -1,6 +1,11 @@
 # CarND-Controls-PID
 Self-Driving Car Engineer Nanodegree Program
 
+
+## Overview
+
+This project implements a PID controller for the car and visulizes it in the Udacity's simulator, the link to which can be found below in the dependencies section. The simulator sends the error in steer angle and the speed to the PID program using WebSocket and receives the steering angle normalized to [-1 1] and throttle normalized to [-1 1]. The PID script uses uWebSockets WebSocket implementation. Udacity provides a seed project to start from on this project [(here)](https://github.com/udacity/CarND-Controls-PID).
+
 ---
 
 ## Dependencies
@@ -37,62 +42,42 @@ Fellow students have put together a guide to Windows set-up for the project [her
 
 Tips for setting up your environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
 
-## Editor Settings
+## Implementation
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+### The PID algorithm flows as what was taught in the lessons
+The PID implementation was done in the following steps.
+1. Implement PID controller for Steering 
+2. Implement PID for Throttle
+3. Parameter tuning for Steering and Throttle.
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+###  PID Controller Implementation
 
-## Code Style
+For the controller for Steering controller, I implemented a PID controller but for the Throttle, I implemented a PI controller. The actual implementation of code for a basic PID/PI controller is fairly straightforward, but the performance of the controller mainly depends on how well the controller parameters are tuned, for which knowledge of each of the P,I and D components is required.Lets look into each of this component seperately.
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+Proportional component: As the name suggest it is just a proportional gian to the error, error between the set point and process variable. That means if we have a system with higher proportional gain the response to the error will be faster. But the drawback is that there will be a very high overshoot, which also leads to higher oscillations in the system response, which can result in unstability and in cases can also lead the sytem to go out of control. For the car the example can be seen here
 
-## Project Instructions and Rubric
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+Integral component: As the name suggests it integrates all the errors from the start. The integral gain is multiplied by the integral error. Logically speaking since it is integral error the integral gain is very low in magnitude compared to the proportional and the derivative component. The result is that even a small error term will cause the integral component to increase slowly. The integral response will continually increase over time unless the error is zero, so the effect is to drive the Steady-State error to zero. Steady-State error is the final difference between the process variable and set point. The integral componenet in effective while the car is taking turns. For the car eample can be found here. 
 
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
+Derivative component:A derivative term as the term suggest responds to the rate of change of error, trying to bring this rate to zero. It aims at flattening the error trajectory into a horizontal line, damping the force applied, and so reduces overshoot. havind a high derivative gain when the error is small will lead to overshoot. After overshooting, the controller will apply a large correction in the opposite direction and repeatedly overshoot the desired position, the output would oscillate around the setpoint in either a constant, growing, or decaying sinusoid. For the car exmaple can be found here.
 
-## Hints!
+### Parameter Tuning
 
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
+To tune the parameters i went with the manual tuning approach,Increase the Kp until the output of the loop oscillates, then the Kp should be set to approximately half of that value for a "quarter amplitude decay" type response. Then increase Ki until any offset is corrected in sufficient time for the process. However, too much Ki will cause instability. Finally, increase Kd, if required, until the loop is acceptably quick to reach its reference after a load disturbance. However, too much Kd will cause excessive response and overshoot. The following table summerizes the effect of each parameter on the system.
 
-## Call for IDE Profiles Pull Requests
 
-Help your fellow students!
+| Parameter  | Rise Time   | Overshoot  | Settling Time   | Steadystate error  |
+|---|---|---|---|---|
+| Kp  | Decrease  | Increase  | Small change  | Decrease  |
+| Ki  | Decrease  | Increase  | Increase  | Decrease  |
+| Kd  | Small change  | Decrease  | Decrease  | No change  |
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+The final parameters for my controllers are: 
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+|   | Steering  | Speed  |
+|---|---|---|
+| Kp  |  0.1 |  0.1 |
+| Ki  | 0.0045  |  0.002 |
+| Kd  | 1.5  |  0.0 |
 
